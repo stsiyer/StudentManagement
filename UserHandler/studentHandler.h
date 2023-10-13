@@ -45,7 +45,6 @@ bool student_operation_handler(int connFD)
             switch (choice)
             {
             case 1:
-                printf("inside case 1");
                 enroll_course(connFD, studentID);
                 break;
             case 2:
@@ -222,8 +221,8 @@ int de_enroll_course(int connFD, int studentId)
     {
         if (student.coursesEnrolled[i] == courseId)
         {
-            student.coursesEnrolled[i] = student.coursesEnrolled[student.noOfCoursesEnrolled-1];
-            student.noOfCoursesEnrolled--;
+            student.coursesEnrolled[i] = student.coursesEnrolled[--student.noOfCoursesEnrolled];
+            break;
         }
     }
 
@@ -264,6 +263,10 @@ int view_enrolled_courses(int connFD, int studentID)
     for (int i = 0; i < student.noOfCoursesEnrolled; i++)
     {
         course = getCourseById(student.coursesEnrolled[i]);
+        if (course.isActive==false)
+        {
+            continue;
+        }
         char temp[100];
         sprintf(temp, "CourseID: %d, CourseName: %s\n", course.id, course.name);
         strcat(writeBuffer, temp);
@@ -301,7 +304,6 @@ bool update_password_student(int connFD, int studentID)
     Student student = getStudentById(studentID);
     char hashedPassword[1000];
     strcpy(hashedPassword, crypt(readBuffer, SALT_BAE));
-    printf("\n%s %s\n", readBuffer, hashedPassword);
     strcpy(student.password, hashedPassword);
 
     if(!updateStudent(student))

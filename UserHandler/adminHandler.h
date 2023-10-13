@@ -391,6 +391,28 @@ bool modify_student_info(int connFD)
             return false;
         }
         student.isActive = (choice == 1) ? true:  false;
+        if (choice!=1)
+        {
+            for (int j = 0; j < student.coursesEnrolled; j++)
+            {
+                Course course = getCourseById(student.coursesEnrolled[j]);
+                bool notFound = true; 
+                for (int i = 0; i < course.noEnrolledStudents; i++)
+                {
+                    if (notFound && course.enrolledStudents[i]==student.id)
+                    {
+                        notFound = false;
+                        continue;
+                    }
+                    if (notFound==false)
+                    {
+                        course.enrolledStudents[i-1] = course.enrolledStudents[i];
+                    }
+                }
+                course.noEnrolledStudents--;
+                updateCourse(course);
+            }
+        }       
         break;   
     default:
         bzero(writeBuffer, sizeof(writeBuffer));
@@ -592,6 +614,5 @@ bool modify_faculty_info(int connFD)
 
     return true;
 }
-
 
 #endif

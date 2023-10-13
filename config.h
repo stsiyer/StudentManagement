@@ -77,7 +77,7 @@
 #define FACULTY_LOGOUT "Logging you out now dear faculty! Good bye!$"
 
 // FACULTY MENU
-#define FACULTY_MENU "1. Add Course\n2. Remove Offered Course\n3. View Enrollments in Course\n4. Change Password\nPress any other key to logout"
+#define FACULTY_MENU "1. Add Course\n2. Remove Offered Course\n3. View Enrollments in Course\n4. Change Password\n5. Change enrollment capacity\nPress any other key to logout"
 
 // ADD COURSE
 #define FACULTY_ADD_COURSE_NAME "What is the course's name?"
@@ -86,6 +86,16 @@
 #define FACULTY_ADD_COURSE_SUCCESS "Course has been created successfully!"
 #define FACULTY_ADD_COURSE_LIMIT "Enter the maximum no of students that can enroll?"
 #define FACULTY_ERROR_COURSE_LIMIT "Invalid Input: Given value is greater than maximum allowed"
+
+// UPDATE ENROLLMENT COURSE
+#define FACULTY_UPDATE_COURSE "What is the course ID?"
+#define FACULTY_UPDATE_COURSE_CAPACITY "What is the new capacity?"
+#define FACULTY_UPDATE_COURSE_INVALID "The entered capacity is not vaild.!^"
+#define FACULTY_UPDATE_COURSE_SUCCESS "Capacity has been updated successfully!"
+
+// REMOVE COURSE
+#define FACULTY_ERROR_COURSE_INVALID "The faculty is not teaching the course associated with the provided course ID.!^"
+#define FACULTY_REMOVE_COURSE_SUCCESS "Course has been removed successfully!"
 
 // ========== COURSE SPECIFIC TEXT===================
 

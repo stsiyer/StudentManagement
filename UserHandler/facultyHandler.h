@@ -9,6 +9,10 @@ bool faculty_operation_handler(int connFD);
 int add_course(int connFD, int facultyID);
 bool update_password_faculty(int connFD, int facultyID);
 bool view_course_enrollments(int connFD, int facultyID);
+bool remove_offered_course(int connFD, int facultyID);
+void remove_course_from_student(int studentId, int courseId);
+bool update_course_capacity(int connFD, int facultyID);
+
 //================================= Function Definition =================================
 
 bool faculty_operation_handler(int connFD)
@@ -53,6 +57,9 @@ bool faculty_operation_handler(int connFD)
                 break;
             case 4:
                 update_password_faculty(connFD, facultyID);
+                break;
+            case 5:
+                update_course_capacity(connFD, facultyID);
                 break;
             default:
                 writeBytes = write(connFD, FACULTY_LOGOUT, strlen(FACULTY_LOGOUT));
@@ -127,7 +134,11 @@ int add_course(int connFD, int facultyID)
     newCourse.id = getNextCourseId();
     newCourse.isActive = true;
 
+    Faculty faculty = getFacultyById(facultyID);
+    faculty.coursesOffered[faculty.noOfCoursesOffered++] = newCourse.id;
+
     createCourse(newCourse);
+    updateFaculty(faculty);
 
 
     bzero(writeBuffer, sizeof(writeBuffer));
@@ -165,7 +176,6 @@ bool update_password_faculty(int connFD, int facultyID)
     Faculty faculty = getFacultyById(facultyID);
     char hashedPassword[1000];
     strcpy(hashedPassword, crypt(readBuffer, SALT_BAE));
-    printf("\n%s %s\n", readBuffer, hashedPassword);
     strcpy(faculty.password, hashedPassword);
 
     updateFaculty(faculty);
@@ -200,33 +210,31 @@ bool view_course_enrollments(int connFD, int facultyID)
         perror("Error while writing STUDENT_VIEW_COURSES to client!");
         return false;
     }
-    int totalCourse = getNextCourseId();
-    for (int i = 1; i < totalCourse; i++)
+    Faculty faculty = getFacultyById(facultyID);
+    for (int i = 0; i < faculty.noOfCoursesOffered; i++)
     {
-        Course course = getCourseById(i);
+        Course course = getCourseById(faculty.coursesOffered[i]);
         if (course.isActive==false)
         {
             continue;
         }
-        if (course.facultyId == facultyID)
+        char courseDetails[200];
+        sprintf(courseDetails, "\tFor Course: %s\n", course.name);
+        strcat(writeBuffer, courseDetails);
+        for (int i = 0; i < course.noEnrolledStudents; i++)
         {
-            char courseDetails[200];
-            sprintf(courseDetails, "\tFor Course: %s\n", course.name);
-            strcat(writeBuffer, courseDetails);
-            for (int i = 0; i < course.noEnrolledStudents; i++)
+            Student student = getStudentById(course.enrolledStudents[i]);
+            if (student.isActive==false)
             {
-                Student student = getStudentById(course.enrolledStudents[i]);
-                if (student.isActive==false)
-                {
-                    continue;
-                }
-                char studentDetails[200];
-                sprintf(studentDetails, "StudentID: %d, StudentName: %s\n", student.id, student.name);
-                printf("StudentID: %d, StudentName: %s\n", student.id, student.name);
-                strcat(writeBuffer, studentDetails);
+                continue;
             }
-            strcat(writeBuffer, "\n");           
+            char studentDetails[200];
+            sprintf(studentDetails, "StudentID: %d, StudentName: %s\n", student.id, student.name);
+            printf("StudentID: %d, StudentName: %s\n", student.id, student.name);
+            strcat(writeBuffer, studentDetails);
         }
+        strcat(writeBuffer, "\n");           
+
     }
     strcat(writeBuffer, "^");
     writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
@@ -240,4 +248,197 @@ bool view_course_enrollments(int connFD, int facultyID)
     return true;
     
 }
+
+bool remove_offered_course(int connFD, int facultyID)
+{
+    ssize_t readBytes, writeBytes;
+    char readBuffer[1000], writeBuffer[1000];
+
+    Course course;
+    sprintf(writeBuffer, "%s\n", FACULTY_REMOVE_COURSE);
+    writeBytes = write(connFD, writeBuffer, sizeof(writeBuffer));
+    if (writeBytes == -1)
+    {
+        perror("Error writing FACULTY_REMOVE_COURSE message to client!");
+        return false;
+    }
+    bzero(readBuffer, sizeof(readBuffer));
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer));
+    if (readBytes == -1)
+    {
+        perror("Error reading course ID response from client!");
+        return false;
+    }
+    int courseId = atoi(readBuffer);
+
+    Faculty faculty = getFacultyById(facultyID);
+    int index = -1;
+    for (int i = 0; i < faculty.noOfCoursesOffered; i++)
+    {
+        if (faculty.coursesOffered[i]==courseId)
+        {
+            index = i;
+            break;
+        }
+    }
+    if (index==-1)
+    {
+        bzero(writeBuffer, sizeof(writeBuffer));
+        strcpy(writeBuffer, FACULTY_ERROR_COURSE_INVALID);
+        writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+        if (writeBytes == -1)
+        {
+            perror("Error while writing FACULTY_ERROR_COURSE_INVALID message to client!");
+            return false;
+        }
+        readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
+        return false;
+    }
+    faculty.coursesOffered[index] = faculty.coursesOffered[--faculty.noOfCoursesOffered];
+    course = getCourseById(courseId);
+
+    for (int i = 0; i < course.noEnrolledStudents; i++)
+    {
+        remove_course_from_student(course.enrolledStudents[i], courseId);
+        
+    }
+    course.isActive = false;
+    course.noEnrolledStudents = 0;
+
+    updateCourse(course);
+    updateFaculty(faculty);
+
+    bzero(writeBuffer, sizeof(writeBuffer));
+    sprintf(writeBuffer, "%s", FACULTY_REMOVE_COURSE_SUCCESS);
+    strcat(writeBuffer, "^");
+    writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+    if (writeBytes == -1)
+    {
+        perror("Error sending course enroll success message to the client!");
+        return false;
+    }
+
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
+
+    return true;
+    
+}
+
+void remove_course_from_student(int studentId, int courseId)
+{
+    Student student = getStudentById(studentId);
+    for (int i = 0; i < student.noOfCoursesEnrolled; i++)
+    {
+        if (student.coursesEnrolled[i] == courseId)
+        {
+            student.coursesEnrolled[i] = student.coursesEnrolled[--student.noOfCoursesEnrolled];
+            break;
+        }
+    }
+    updateStudent(student);
+    return;
+}
+
+bool update_course_capacity(int connFD, int facultyID)
+{
+    ssize_t readBytes, writeBytes;
+    char readBuffer[1000], writeBuffer[1000];
+
+    Course course;
+    sprintf(writeBuffer, "%s\n", FACULTY_UPDATE_COURSE);
+    writeBytes = write(connFD, writeBuffer, sizeof(writeBuffer));
+    if (writeBytes == -1)
+    {
+        perror("Error writing FACULTY_UPDATE_COURSE message to client!");
+        return false;
+    }
+    bzero(readBuffer, sizeof(readBuffer));
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer));
+    if (readBytes == -1)
+    {
+        perror("Error reading course ID response from client!");
+        return false;
+    }
+    int courseId = atoi(readBuffer);
+
+    Faculty faculty = getFacultyById(facultyID);
+    int index = -1;
+    for (int i = 0; i < faculty.noOfCoursesOffered; i++)
+    {
+        if (faculty.coursesOffered[i]==courseId)
+        {
+            index = i;
+            break;
+        }
+    }
+    if (index==-1)
+    {
+        bzero(writeBuffer, sizeof(writeBuffer));
+        strcpy(writeBuffer, FACULTY_ERROR_COURSE_INVALID);
+        writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+        if (writeBytes == -1)
+        {
+            perror("Error while writing FACULTY_ERROR_COURSE_INVALID message to client!");
+            return false;
+        }
+        readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
+        return false;
+    }
+
+    writeBytes = write(connFD, FACULTY_UPDATE_COURSE_CAPACITY, strlen(FACULTY_UPDATE_COURSE_CAPACITY));
+    if (writeBytes == -1)
+    {
+        perror("Error while writing ADMIN_MOD_student_MENU message to client!");
+        return false;
+    }
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer));
+    if (readBytes == -1)
+    {
+        perror("Error while getting student modification menu choice from client!");
+        return false;
+    }
+
+    int capacity = atoi(readBuffer);
+    if (capacity > COURSE_MAX_SEATS || capacity<1)
+    {
+        bzero(writeBuffer, sizeof(writeBuffer));
+        strcpy(writeBuffer, FACULTY_ERROR_COURSE_INVALID);
+        writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+        if (writeBytes == -1)
+        {
+            perror("Error while writing FACULTY_ERROR_COURSE_INVALID message to client!");
+            return false;
+        }
+        readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
+        return false;
+    }
+
+    course = getCourseById(courseId);
+    if (capacity < course.noEnrolledStudents)
+    {
+        for (int i = capacity; i < course.noEnrolledStudents; i++)
+        {
+            remove_course_from_student(course.enrolledStudents[i] ,courseId);
+        }
+        course.noEnrolledStudents = capacity;
+    }
+    course.maxSeats = capacity;
+    updateCourse(course);
+
+    bzero(writeBuffer, sizeof(writeBuffer));
+    sprintf(writeBuffer, "%s", FACULTY_UPDATE_COURSE_SUCCESS);
+    strcat(writeBuffer, "^");
+    writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+    if (writeBytes == -1)
+    {
+        perror("Error sending FACULTY_UPDATE_COURSE_SUCCESS message to the client!");
+        return false;
+    }
+
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
+
+
+    return true;
+}
+
 #endif
