@@ -19,7 +19,7 @@
 
 // Function Prototypes =================================
 
-bool login_handler(UserType user, int connFD);
+int login_handler(UserType user, int connFD);
 Faculty getFacultyByLoginId(char* loginId);
 Student getStudentByLoginId(char* loginId);
 
@@ -27,8 +27,8 @@ Student getStudentByLoginId(char* loginId);
 
 // Function Definition =================================
 
-bool login_handler(UserType user, int connFD)
-{
+int login_handler(UserType user, int connFD)
+{    
     ssize_t readBytes, writeBytes;            // Number of bytes written to / read from the socket
     char readBuffer[1000], writeBuffer[1000]; // Buffer for reading from / writing to the client
     char tempBuffer[1000];
@@ -53,7 +53,7 @@ bool login_handler(UserType user, int connFD)
     if (writeBytes == -1)
     {
         perror("Error writing WELCOME & LOGIN_ID message to the client!");
-        return false;
+        return 0;
     }
 
     readBytes = read(connFD, readBuffer, sizeof(readBuffer));
@@ -79,7 +79,7 @@ bool login_handler(UserType user, int connFD)
     else if (user == STUDENT)
     {
         student = getStudentByLoginId(readBuffer);
-        if (student.id!=-1)
+        if (student.id!=-1 && student.isActive)
             userFound = true;
     }
 
@@ -90,15 +90,15 @@ bool login_handler(UserType user, int connFD)
         if (writeBytes == -1)
         {
             perror("Error writing PASSWORD message to client!");
-            return false;
+            return 0;
         }
 
         bzero(readBuffer, sizeof(readBuffer));
         readBytes = read(connFD, readBuffer, sizeof(readBuffer));
-        if (readBytes == 1)
+        if (readBytes == -1)
         {
             perror("Error reading password from the client!");
-            return false;
+            return 0;
         }
 
         char hashedPassword[1000];
@@ -107,17 +107,17 @@ bool login_handler(UserType user, int connFD)
         if (user == ADMIN)
         {
             if (strcmp(hashedPassword, ADMIN_PASSWORD) == 0)
-                return true;
+                return 1;
         }
         if (user == STUDENT)
         {
             if (strcmp(hashedPassword, student.password) == 0)
-                return true;
+                return student.id;
         }
         if (user == FACULTY)
         {
             if (strcmp(hashedPassword, faculty.password) == 0)
-                return true;
+                return faculty.id;
         }
 
         bzero(writeBuffer, sizeof(writeBuffer));

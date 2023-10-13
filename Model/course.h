@@ -8,7 +8,7 @@ typedef struct {
     int noEnrolledStudents;
     int enrolledStudents[COURSE_MAX_SEATS];
     int maxSeats;
-    int limit;
+    bool isActive;
 } Course;
 
 #endif

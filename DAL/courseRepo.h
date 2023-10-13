@@ -59,7 +59,7 @@ int getNextCourseId()
 void createCourse(Course newCourse)
 {
     ssize_t readBytes, writeBytes;
-    int CourseFileDescriptor = open(FACULTY_FILE, O_CREAT | O_APPEND | O_WRONLY, S_IRWXU);
+    int CourseFileDescriptor = open(COURSE_FILE, O_CREAT | O_APPEND | O_WRONLY, S_IRWXU);
     if (CourseFileDescriptor == -1)
     {
         perror("Error while creating / opening Course file!");
@@ -134,6 +134,8 @@ bool updateCourse(Course course)
     struct flock lock;
     lock.l_type = F_WRLCK;
     lock.l_start = offset;
+    lock.l_whence = SEEK_SET;
+    lock.l_len = sizeof(Course);
     int lockingStatus = fcntl(courseFileDescriptor, F_SETLKW, &lock);
     if (lockingStatus == -1)
     {
@@ -144,11 +146,11 @@ bool updateCourse(Course course)
     writeBytes = write(courseFileDescriptor, &course, sizeof(Course));
     if (writeBytes == -1)
     {
-        perror("Error while writing update course info into file");
+        perror("Error while writing update course into file");
     }
 
     lock.l_type = F_UNLCK;
-    fcntl(courseFileDescriptor, F_SETLKW, &lock);
+    fcntl(courseFileDescriptor, F_SETLK, &lock);
 
     close(courseFileDescriptor);
     return true;

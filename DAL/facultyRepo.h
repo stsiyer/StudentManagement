@@ -133,7 +133,9 @@ bool updateFaculty(Faculty faculty)
     }
     struct flock lock;
     lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
     lock.l_start = offset;
+    lock.l_len = sizeof(Student);
     int lockingStatus = fcntl(facultyFileDescriptor, F_SETLKW, &lock);
     if (lockingStatus == -1)
     {
