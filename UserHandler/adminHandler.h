@@ -393,7 +393,7 @@ bool modify_student_info(int connFD)
         student.isActive = (choice == 1) ? true:  false;
         if (choice!=1)
         {
-            for (int j = 0; j < student.coursesEnrolled; j++)
+            for (int j = 0; j < student.noOfCoursesEnrolled; j++)
             {
                 Course course = getCourseById(student.coursesEnrolled[j]);
                 bool notFound = true; 
