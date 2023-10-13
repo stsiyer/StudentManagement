@@ -412,6 +412,7 @@ bool modify_student_info(int connFD)
                 course.noEnrolledStudents--;
                 updateCourse(course);
             }
+            student.noOfCoursesEnrolled = 0;
         }       
         break;   
     default:
