@@ -65,12 +65,27 @@ void createCourse(Course newCourse)
         perror("Error while creating / opening Course file!");
         return;
     }
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_END;
+    lock.l_start = 0;
+    lock.l_len = sizeof(Student);
+    lock.l_pid = getpid();
+    int lockingStatus = fcntl(CourseFileDescriptor, F_SETLKW, &lock);
+    if (lockingStatus == -1)
+    {
+        perror("Error while obtaining write lock on course record!");
+        return;
+    }
     writeBytes = write(CourseFileDescriptor, &newCourse, sizeof(newCourse));
     if (writeBytes == -1)
     {
         perror("Error while writing Course record to file!");
         return;
     }
+
+    lock.l_type = F_UNLCK;
+    fcntl(CourseFileDescriptor, F_SETLKW, &lock);
 
     close(CourseFileDescriptor);
 }
@@ -136,6 +151,7 @@ bool updateCourse(Course course)
     lock.l_start = offset;
     lock.l_whence = SEEK_SET;
     lock.l_len = sizeof(Course);
+    lock.l_pid = getpid();
     int lockingStatus = fcntl(courseFileDescriptor, F_SETLKW, &lock);
     if (lockingStatus == -1)
     {
