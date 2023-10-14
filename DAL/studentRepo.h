@@ -65,12 +65,29 @@ void createStudent(Student newStudent)
         perror("Error while creating / opening Student file!");
         return;
     }
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_start = 0;
+    lock.l_whence = SEEK_END;
+    lock.l_len = sizeof(Student);
+    lock.l_pid = getpid();
+    int lockingStatus = fcntl(studentFileDescriptor, F_SETLKW, &lock);
+    if (lockingStatus == -1)
+    {
+        perror("Error while obtaining write lock on student record!");
+        return;
+    }
+
     writeBytes = write(studentFileDescriptor, &newStudent, sizeof(newStudent));
+
     if (writeBytes == -1)
     {
         perror("Error while writing Student record to file!");
         return;
     }
+
+    lock.l_type = F_UNLCK;
+    fcntl(studentFileDescriptor, F_SETLKW, &lock);
 
     close(studentFileDescriptor);
 }
@@ -136,6 +153,7 @@ bool updateStudent(Student student)
     lock.l_start = offset;
     lock.l_whence = SEEK_SET;
     lock.l_len = sizeof(Student);
+    lock.l_pid = getpid();
     int lockingStatus = fcntl(studentFileDescriptor, F_SETLKW, &lock);
     if (lockingStatus == -1)
     {

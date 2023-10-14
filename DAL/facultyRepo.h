@@ -65,12 +65,29 @@ void createFaculty(Faculty newFaculty)
         perror("Error while creating / opening Faculty file!");
         return;
     }
+
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_start = 0;
+    lock.l_whence = SEEK_END;
+    lock.l_len = sizeof(Faculty);
+    lock.l_pid = getpid();
+    int lockingStatus = fcntl(FacultyFileDescriptor, F_SETLKW, &lock);
+    if (lockingStatus == -1)
+    {
+        perror("Error while obtaining write lock on faculty record!");
+        return;
+    }
+
     writeBytes = write(FacultyFileDescriptor, &newFaculty, sizeof(newFaculty));
     if (writeBytes == -1)
     {
         perror("Error while writing Faculty record to file!");
         return;
     }
+
+    lock.l_type = F_UNLCK;
+    fcntl(FacultyFileDescriptor, F_SETLKW, &lock);
 
     close(FacultyFileDescriptor);
 }
@@ -136,6 +153,7 @@ bool updateFaculty(Faculty faculty)
     lock.l_whence = SEEK_SET;
     lock.l_start = offset;
     lock.l_len = sizeof(Student);
+    lock.l_pid = getpid();
     int lockingStatus = fcntl(facultyFileDescriptor, F_SETLKW, &lock);
     if (lockingStatus == -1)
     {
