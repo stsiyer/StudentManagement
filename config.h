@@ -83,9 +83,9 @@
 #define FACULTY_ADD_COURSE_NAME "What is the course's name?"
 #define FACULTY_REMOVE_COURSE "What is the course ID to be removed?"
 #define FACULTY_VIEW_COURSE_ENROLLENT "Enrollments in the course are"
-#define FACULTY_ADD_COURSE_SUCCESS "Course has been created successfully!"
+#define FACULTY_ADD_COURSE_SUCCESS "Course has been created successfully with courseID: "
 #define FACULTY_ADD_COURSE_LIMIT "Enter the maximum no of students that can enroll?"
-#define FACULTY_ERROR_COURSE_LIMIT "Invalid Input: Given value is greater than maximum allowed"
+#define FACULTY_ERROR_COURSE_LIMIT "Invalid Input: Given value is greater than maximum allowed^"
 
 // UPDATE ENROLLMENT COURSE
 #define FACULTY_UPDATE_COURSE "What is the course ID?"

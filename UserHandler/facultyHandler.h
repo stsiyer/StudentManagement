@@ -142,7 +142,7 @@ int add_course(int connFD, int facultyID)
 
 
     bzero(writeBuffer, sizeof(writeBuffer));
-    sprintf(writeBuffer, "%s", FACULTY_ADD_COURSE_SUCCESS);
+    sprintf(writeBuffer, "%s %d", FACULTY_ADD_COURSE_SUCCESS, newCourse.id);
     strcat(writeBuffer, "^");
     writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
     if (writeBytes == -1)
@@ -230,7 +230,6 @@ bool view_course_enrollments(int connFD, int facultyID)
             }
             char studentDetails[200];
             sprintf(studentDetails, "StudentID: %d, StudentName: %s\n", student.id, student.name);
-            printf("StudentID: %d, StudentName: %s\n", student.id, student.name);
             strcat(writeBuffer, studentDetails);
         }
         strcat(writeBuffer, "\n");           
