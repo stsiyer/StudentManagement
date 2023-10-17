@@ -10,6 +10,7 @@ int enroll_course(int connFD, int studentId);
 int de_enroll_course(int connFD, int studentId);
 int view_enrolled_courses(int connFD, int studentID);
 bool update_password_student(int connFD, int studentID);
+void show_courses(int connFD);
 
 //================================= Function Definition =================================
 
@@ -56,6 +57,9 @@ bool student_operation_handler(int connFD)
             case 4:
                 update_password_student(connFD, studentID);
                 break;
+            case 5:
+                show_courses(connFD);
+                break; 
             default:
                 writeBytes = write(connFD, STUDENT_LOGOUT, strlen(STUDENT_LOGOUT));
                 return false;
@@ -324,5 +328,36 @@ bool update_password_student(int connFD, int studentID)
     
 }
 
+void show_courses(int connFD)
+{
+    size_t writeBytes, readBytes;            // Number of bytes read from / written to the client
+    char writeBuffer[1000], readBuffer[1000]; // A buffer used for reading & writing to the client
+    bzero(writeBuffer, sizeof(writeBuffer));
+    strcpy(writeBuffer, FACULTY_VIEW_COURSES);
+    strcat(writeBuffer, "\n\n");
+    int totalCourses = getNextCourseId();
+    for (int i = 0; i < totalCourses; i++)
+    {
+        Course course = getCourseById(i);
+        if (course.isActive==false)
+        {
+            continue;
+        }
+        char courseDetails[200];
+        sprintf(courseDetails, "\tCourseId: %d CourseName: %s\n", course.id, course.name);
+        strcat(writeBuffer, courseDetails);
+        strcat(writeBuffer, "\n");           
 
+    }
+    strcat(writeBuffer, "^");
+    writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+    if (writeBytes == -1)
+    {
+        perror("Error while writing Course Enrollments to client!");
+        return;
+    }
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
+
+    return;
+}
 #endif

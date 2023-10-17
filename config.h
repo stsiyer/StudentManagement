@@ -86,6 +86,7 @@
 #define FACULTY_ADD_COURSE_SUCCESS "Course has been created successfully with courseID: "
 #define FACULTY_ADD_COURSE_LIMIT "Enter the maximum no of students that can enroll?"
 #define FACULTY_ERROR_COURSE_LIMIT "Invalid Input: Given value is greater than maximum allowed^"
+#define FACULTY_VIEW_COURSES "Available courses are :"
 
 // UPDATE ENROLLMENT COURSE
 #define FACULTY_UPDATE_COURSE "What is the course ID?"
@@ -110,7 +111,7 @@
 #define STUDENT_LOGOUT "Logging you out now dear student! Good bye!$"
 
 // STUDENT MENU
-#define STUDENT_MENU "1. Enroll Course\n2. Unenroll Course\n3. View Enrolled Courses\n4. Change Password\nPress any other key to logout"
+#define STUDENT_MENU "1. Enroll Course\n2. Unenroll Course\n3. View Enrolled Courses\n4. Change Password\n5. View all courses\nPress any other key to logout"
 
 // ENROLL COURSE
 #define STUDENT_ENROLL_COURSE "What is the courseID?"

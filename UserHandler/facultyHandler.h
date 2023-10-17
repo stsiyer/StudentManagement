@@ -60,7 +60,7 @@ bool faculty_operation_handler(int connFD)
                 break;
             case 5:
                 update_course_capacity(connFD, facultyID);
-                break;
+                break;   
             default:
                 writeBytes = write(connFD, FACULTY_LOGOUT, strlen(FACULTY_LOGOUT));
                 return false;
