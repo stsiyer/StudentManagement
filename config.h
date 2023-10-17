@@ -25,7 +25,7 @@
 
 // ADMIN CREDENTIALS
 #define ADMIN_LOGIN_ID "admin"
-#define ADMIN_PASSWORD "66WrdC8pl7zYM" // "420boo69"
+#define ADMIN_PASSWORD "66Z8KDiDV9.3c" // "admin"
 
 // LOGIN WELCOME
 #define ADMIN_LOGIN_WELCOME "Welcome dear admin! With great power comes great responsibility!\nEnter your credentials to unlock this power!"
